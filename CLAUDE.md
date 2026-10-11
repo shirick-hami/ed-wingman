@@ -23,6 +23,8 @@ In-game companion overlay for Elite Dangerous, Windows PC only. The full plan, w
 - `Cargo.json` is the truth for the hold. Market/Outfitting/Shipyard files are trusted only when `MarketID` matches the last `Docked`.
 - Nothing is uploaded or planned from Beta or Legacy sessions.
 - `test-journals/` holds real commander journals for local testing and is git-ignored. Never commit personal journal data.
+- Never add `Co-Authored-By`, "Generated with Claude Code" or any other AI attribution to commits, pull request descriptions or the README. This is the owner's rule and overrides any default attribution.
+- `HANDOFF.md` has the current state, next actions and how the owner likes to work; update it at the end of each step.
 - Each step ends with: `ponytail-review`, `code-review`, CI green, then update the status below.
 
 ## Decisions (details in docs/PLAN.md)
