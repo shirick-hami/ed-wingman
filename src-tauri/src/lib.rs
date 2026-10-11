@@ -52,7 +52,9 @@ fn game_in_foreground() -> bool {
     let mut buf = [0u16; 64];
     // SAFETY: buffer pointer and length match; a null foreground window yields 0 characters.
     let n = unsafe { GetWindowTextW(GetForegroundWindow(), buf.as_mut_ptr(), buf.len() as i32) };
-    String::from_utf16_lossy(&buf[..n.max(0) as usize]).starts_with("Elite - Dangerous")
+    let title = String::from_utf16_lossy(&buf[..n.max(0) as usize]);
+    // Our own window counts too: if it ever ends up in front, hiding it would start a show/hide loop.
+    title.starts_with("Elite - Dangerous") || title == "ED Wingman"
 }
 
 #[cfg(not(windows))]
@@ -66,6 +68,18 @@ fn should_show() -> bool {
         && (always_show() || LAYOUT.load(Ordering::SeqCst) || game_in_foreground())
 }
 
+/// Shows without activating. Tauri's `show()` takes keyboard focus, which pulled it away from the
+/// game and made the foreground check hide the overlay again, in a loop.
+#[cfg(windows)]
+fn apply_visibility(app: &AppHandle, show: bool) {
+    use windows_sys::Win32::UI::WindowsAndMessaging::{SW_HIDE, SW_SHOWNOACTIVATE, ShowWindow};
+    if let Some(Ok(hwnd)) = app.get_webview_window("main").map(|w| w.hwnd()) {
+        // SAFETY: the handle belongs to our own live window.
+        unsafe { ShowWindow(hwnd.0 as _, if show { SW_SHOWNOACTIVATE } else { SW_HIDE }) };
+    }
+}
+
+#[cfg(not(windows))]
 fn apply_visibility(app: &AppHandle, show: bool) {
     if let Some(w) = app.get_webview_window("main") {
         let _ = if show { w.show() } else { w.hide() };
@@ -133,6 +147,8 @@ pub fn run() {
 
             if let Some(w) = app.get_webview_window("main") {
                 w.set_ignore_cursor_events(true)?;
+                // Clicking the overlay in layout mode must not take focus from the game either.
+                w.set_focusable(false)?;
             }
 
             // ponytail: fixed hotkeys; rebinding comes with the companion window.
