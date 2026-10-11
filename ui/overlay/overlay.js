@@ -19,7 +19,9 @@ function render(s) {
   const loc = s.location;
   $("cmdr").textContent = s.commander.name;
   $("system").textContent = loc.system || "Unknown system";
-  $("place").textContent = loc.docked ? `Docked at ${loc.station}` : loc.body ? `Near ${loc.body}` : "In flight";
+  // After a jump the journal names the arrival star as the body, and it is usually named after the system.
+  const near = loc.body && loc.body !== loc.system ? `Near ${loc.body}` : "In flight";
+  $("place").textContent = loc.docked ? `Docked at ${loc.station}` : near;
   $("ship").textContent = s.ship.name || s.ship.model || "-";
   $("credits").textContent = s.balance == null ? "-" : `${credits.format(s.balance)} CR`;
 
