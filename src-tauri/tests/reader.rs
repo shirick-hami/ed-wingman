@@ -40,6 +40,19 @@ fn fixture_replay_builds_current_state() {
     assert_eq!(s.cargo.items[2].display, "Ion Distributor");
 }
 
+/// Replays a real journal folder and prints the resulting state, for checking against the game.
+/// `ED_JOURNAL_DIR=<folder> cargo test real_journal -- --ignored --nocapture`
+#[test]
+#[ignore = "needs ED_JOURNAL_DIR pointing at a real journal folder"]
+fn real_journal_replays_without_panicking() {
+    let dir = PathBuf::from(std::env::var("ED_JOURNAL_DIR").expect("set ED_JOURNAL_DIR"));
+    let events = Reader::new(dir).poll();
+    let mut state = State::default();
+    events.iter().for_each(|e| state.apply(e));
+    println!("{} events\n{}", events.len(), serde_json::to_string_pretty(&state).unwrap());
+    assert!(!state.commander.name.is_empty());
+}
+
 #[test]
 fn partial_lines_wait_for_their_newline() {
     let dir = std::env::temp_dir().join(format!("edw-partial-{}", std::process::id()));

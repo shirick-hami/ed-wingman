@@ -33,8 +33,19 @@ Tauri 2 desktop app; Go + SQLite price server on a VPS behind Cloudflare (Spansh
 
 | Step | State |
 |---|---|
-| 1. Skeleton, journal reader, reducer, CI | Done except: verify against real journals (needs `test-journals/`), context-aware panels from `GuiFocus` |
+| 1. Skeleton, journal reader, reducer, CI | Done. Verified in the live game on 2026-10-11 (Odyssey 4.4.1.1): jump, supercruise, dock, buy, sell, undock, alt-tab, hotkeys, layout mode, restart, shutdown. Context-aware panels from `GuiFocus` moved to step 2. |
 | 2. Exploration panel, flight strip, unsold data, exobiology | Not started |
 | 3–13 | Not started; see docs/PLAN.md "Build order" |
+
+Check against a real journal folder: `ED_JOURNAL_DIR=<folder> cargo test --manifest-path src-tauri/Cargo.toml real_journal -- --ignored --nocapture`. The game is installed on the dev PC, so the default Saved Games folder has real journals.
+
+Things the live test taught us (keep these when changing the window code):
+- The overlay must never take focus in normal play: show it with `SW_SHOWNOACTIVATE`, not Tauri's `show()`. Layout mode takes focus on purpose, because the game owns the mouse while it is the active window.
+- Tauri does not know the window is visible, so any style change it makes hides it; `sync_visibility` reconciles against the real window state every tick.
+- Resize from the page (`layoutAt`), never natively: native resize fights the height auto-fit.
+- `Status.json` updates at once; `Cargo.json` and the journal lag about two seconds.
+- `tauri dev` runs the app from `src-tauri/`, and a running dev app locks the exe, so stop it before `cargo test`.
+
+Known gap for step 8: credits come from `Status.json`, which has no balance once the game is closed. A cold start with the game closed shows the `LoadGame` balance, which is stale if anything was bought since (seen: 250,000 shown, 49,955 actual). Track credit-changing journal events or persist the last balance.
 
 Measured memory, debug build, fixture: 6 MB app + about 150 MB WebView2 processes. Re-measure on a release build in step 12.
