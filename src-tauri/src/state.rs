@@ -47,6 +47,9 @@ pub struct Location {
 pub struct Ship {
     #[serde(rename = "type")]
     pub kind: String,
+    /// Model name for display, e.g. "Cobra Mk III" for `cobramkiii`.
+    pub model: String,
+    /// The name the player gave the ship; empty if they have not named it.
     pub name: String,
     pub ident: String,
     pub cargo_capacity: Option<u64>,
@@ -109,6 +112,63 @@ pub fn is_beta_or_legacy(version: &str) -> bool {
     version.to_ascii_lowercase().contains("beta") || major.is_some_and(|m| m < 4)
 }
 
+/// Display name for the journal's internal ship id. The journal only localises it in some events.
+/// Unknown ids (ships added after this table) fall back to the id with a capital first letter.
+pub fn ship_model(kind: &str) -> String {
+    let id = kind.to_ascii_lowercase();
+    let known = match id.as_str() {
+        "sidewinder" => "Sidewinder",
+        "eagle" => "Eagle",
+        "hauler" => "Hauler",
+        "adder" => "Adder",
+        "viper" => "Viper Mk III",
+        "viper_mkiv" => "Viper Mk IV",
+        "cobramkiii" => "Cobra Mk III",
+        "cobramkiv" => "Cobra Mk IV",
+        "cobramkv" => "Cobra Mk V",
+        "type6" => "Type-6 Transporter",
+        "type7" => "Type-7 Transporter",
+        "type8" => "Type-8 Transporter",
+        "type9" => "Type-9 Heavy",
+        "type9_military" => "Type-10 Defender",
+        "dolphin" => "Dolphin",
+        "orca" => "Orca",
+        "belugaliner" => "Beluga Liner",
+        "asp" => "Asp Explorer",
+        "asp_scout" => "Asp Scout",
+        "diamondback" => "Diamondback Scout",
+        "diamondbackxl" => "Diamondback Explorer",
+        "vulture" => "Vulture",
+        "python" => "Python",
+        "python_nx" => "Python Mk II",
+        "ferdelance" => "Fer-de-Lance",
+        "mamba" => "Mamba",
+        "anaconda" => "Anaconda",
+        "krait_mkii" => "Krait Mk II",
+        "krait_light" => "Krait Phantom",
+        "typex" => "Alliance Chieftain",
+        "typex_2" => "Alliance Crusader",
+        "typex_3" => "Alliance Challenger",
+        "independant_trader" => "Keelback",
+        "mandalay" => "Mandalay",
+        "corsair" => "Corsair",
+        "empire_eagle" => "Imperial Eagle",
+        "empire_courier" => "Imperial Courier",
+        "empire_trader" => "Imperial Clipper",
+        "cutter" => "Imperial Cutter",
+        "federation_dropship" => "Federal Dropship",
+        "federation_dropship_mkii" => "Federal Assault Ship",
+        "federation_gunship" => "Federal Gunship",
+        "federation_corvette" => "Federal Corvette",
+        _ => "",
+    };
+    if !known.is_empty() {
+        return known.to_owned();
+    }
+    let mut chars = kind.chars();
+    chars.next().map(|c| c.to_uppercase().chain(chars).collect()).unwrap_or_default()
+}
+
 impl State {
     pub fn apply(&mut self, ev: &Value) {
         let Some(event) = s(ev, "event") else { return };
@@ -130,14 +190,20 @@ impl State {
                 if event.eq_ignore_ascii_case("loadgame") {
                     self.running = true;
                     self.balance = i(ev, "Credits").or(self.balance);
-                    self.ship.kind = s(ev, "Ship").unwrap_or_default();
-                    self.ship.name = s(ev, "ShipName").unwrap_or_default();
-                    self.ship.ident = s(ev, "ShipIdent").unwrap_or_default();
-                    self.ship.fuel_capacity = f(ev, "FuelCapacity");
+                    // Loading in on foot reports the suit as the "ship"; keep the last real ship.
+                    let kind = s(ev, "Ship").unwrap_or_default();
+                    if !kind.to_ascii_lowercase().contains("suit") {
+                        self.ship.model = ship_model(&kind);
+                        self.ship.kind = kind;
+                        self.ship.name = s(ev, "ShipName").unwrap_or_default();
+                        self.ship.ident = s(ev, "ShipIdent").unwrap_or_default();
+                        self.ship.fuel_capacity = f(ev, "FuelCapacity");
+                    }
                 }
             }
             "loadout" => {
                 self.ship.kind = s(ev, "Ship").unwrap_or_default();
+                self.ship.model = ship_model(&self.ship.kind);
                 self.ship.name = s(ev, "ShipName").unwrap_or_default();
                 self.ship.ident = s(ev, "ShipIdent").unwrap_or_default();
                 self.ship.cargo_capacity = u(ev, "CargoCapacity");

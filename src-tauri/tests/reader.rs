@@ -28,6 +28,7 @@ fn fixture_replay_builds_current_state() {
     assert_eq!(s.location.market_id, Some(128001536));
 
     assert_eq!(s.ship.kind, "type9");
+    assert_eq!(s.ship.model, "Type-9 Heavy");
     assert_eq!(s.ship.cargo_capacity, Some(720));
     assert_eq!(s.ship.hull_health, Some(0.82));
 
@@ -99,6 +100,15 @@ fn second_commander_clears_the_first_ones_state() {
     s.apply(&json!({"event":"Commander","FID":"F2","Name":"Two"}));
     assert_eq!(s.commander.name, "Two");
     assert!(!s.location.docked && s.location.station.is_none());
+}
+
+#[test]
+fn loading_in_on_foot_keeps_the_last_ship() {
+    let mut s = State::default();
+    s.apply(&json!({"event":"Loadout","Ship":"sidewinder","ShipName":"","CargoCapacity":2}));
+    s.apply(&json!({"event":"LoadGame","FID":"F1","Commander":"One","Ship":"FlightSuit","Credits":5}));
+    assert_eq!(s.ship.model, "Sidewinder");
+    assert_eq!(ed_wingman_lib::state::ship_model("some_new_ship"), "Some_new_ship");
 }
 
 #[test]

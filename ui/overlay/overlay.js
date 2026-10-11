@@ -20,7 +20,7 @@ function render(s) {
   $("cmdr").textContent = s.commander.name;
   $("system").textContent = loc.system || "Unknown system";
   $("place").textContent = loc.docked ? `Docked at ${loc.station}` : loc.body ? `Near ${loc.body}` : "In flight";
-  $("ship").textContent = s.ship.name || s.ship.type || "-";
+  $("ship").textContent = s.ship.name || s.ship.model || "-";
   $("credits").textContent = s.balance == null ? "-" : `${credits.format(s.balance)} CR`;
 
   const cap = s.ship.cargoCapacity;
