@@ -1,39 +1,151 @@
+/* Cockpit-hologram look: orange light on tinted glass, cut corners, bracket ticks.
+   --hud is the one colour to change to match an EDHM theme. */
 :root {
-  --bg: rgba(8, 10, 14, 0.78);
-  --text: #ece8e1;
-  --muted: #9a958c;
-  --accent: #ff8c1a;
-  --warn: #ff5a4f;
+  --hud: #ff7a00;
+  --hud-dim: color-mix(in srgb, var(--hud) 62%, #000);
+  --hud-faint: color-mix(in srgb, var(--hud) 22%, transparent);
+  --glass: rgba(12, 7, 2, 0.8);
+  --value: #ffe2c2;
+  --warn: #ff3b2f;
+  --cut: 14px;
+  --font: "Bahnschrift", "DIN Alternate", "Segoe UI", system-ui, sans-serif;
 }
 
 html, body {
   margin: 0;
   background: transparent;
-  color: var(--text);
-  font: 13px/1.4 "Segoe UI", system-ui, sans-serif;
-  user-select: none;
   overflow: hidden;
+  user-select: none;
+  font-family: var(--font);
+  font-variant-numeric: tabular-nums;
+  color: var(--value);
 }
 
+/* Frame: the outer layer is the 1px orange line, the inner layer the glass, both cut at two corners. */
 #panel {
-  margin: 4px;
-  padding: 8px 12px;
-  background: var(--bg);
-  border-left: 3px solid var(--accent);
-  border-radius: 4px;
+  --shape: polygon(var(--cut) 0, 100% 0, 100% calc(100% - var(--cut)), calc(100% - var(--cut)) 100%, 0 100%, 0 var(--cut));
+  position: relative;
+  margin: 6px;
+  padding: 10px 14px 12px;
+  clip-path: var(--shape);
+  background: var(--hud-dim);
+  isolation: isolate;
 }
+#panel::before {
+  content: "";
+  position: absolute;
+  inset: 1px;
+  z-index: -1;
+  clip-path: var(--shape);
+  background:
+    repeating-linear-gradient(0deg, transparent 0 2px, rgba(255, 122, 0, 0.035) 2px 3px),
+    linear-gradient(160deg, rgba(255, 122, 0, 0.09), transparent 45%),
+    var(--glass);
+}
+/* Bracket ticks on the two uncut corners. */
+#panel::after {
+  content: "";
+  position: absolute;
+  inset: 3px;
+  pointer-events: none;
+  background:
+    linear-gradient(var(--hud), var(--hud)) top right / 10px 2px,
+    linear-gradient(var(--hud), var(--hud)) top right / 2px 10px,
+    linear-gradient(var(--hud), var(--hud)) bottom left / 10px 2px,
+    linear-gradient(var(--hud), var(--hud)) bottom left / 2px 10px;
+  background-repeat: no-repeat;
+}
+
+header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 12px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid var(--hud-faint);
+  font-stretch: semi-condensed;
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+.mark { color: var(--hud); font-weight: 700; }
+#cmdr { color: var(--hud-dim); }
+#cmdr:not(:empty)::before { content: "CMDR "; }
+
+#notice {
+  margin: 8px 0 0;
+  padding: 4px 8px;
+  border-left: 2px solid var(--warn);
+  background: rgba(255, 59, 47, 0.12);
+  color: #ffb3ad;
+  font-size: 12px;
+}
+
+.location { margin: 10px 0 8px; }
+h1 {
+  margin: 0;
+  color: var(--hud);
+  font-size: 21px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  line-height: 1.1;
+  text-transform: uppercase;
+  text-shadow: 0 0 8px rgba(255, 122, 0, 0.45);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+#place { margin: 2px 0 0; font-size: 13px; color: var(--value); }
 
 dl {
   display: grid;
-  grid-template-columns: max-content 1fr;
-  gap: 2px 12px;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px 16px;
   margin: 0;
+  padding-top: 8px;
+  border-top: 1px solid var(--hud-faint);
 }
-dt { color: var(--muted); text-transform: uppercase; font-size: 11px; letter-spacing: 0.04em; align-self: center; }
-dd { margin: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+dl .wide { grid-column: 1 / -1; }
+dt {
+  color: var(--hud-dim);
+  font-stretch: semi-condensed;
+  font-size: 10px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+dd {
+  margin: 1px 0 0;
+  font-size: 14px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
 
-#notice { margin: 0 0 6px; color: var(--warn); }
+/* Hold fill: segmented like the in-game cargo meter. */
+.bar {
+  height: 5px;
+  margin-top: 4px;
+  background: repeating-linear-gradient(90deg, var(--hud-faint) 0 6px, transparent 6px 8px);
+}
+.bar span {
+  display: block;
+  height: 100%;
+  width: 0;
+  background: repeating-linear-gradient(90deg, var(--hud) 0 6px, transparent 6px 8px);
+  transition: width 0.4s ease-out;
+}
 
-#layout-hint { display: none; margin: 6px 0 0; color: var(--accent); font-size: 11px; }
-body.layout #panel { outline: 1px dashed var(--accent); cursor: move; }
+/* One moment of motion: a scan line passes once when the panel boots. */
+#panel { animation: boot 0.5s ease-out both; }
+@keyframes boot {
+  from { opacity: 0; clip-path: polygon(0 0, 100% 0, 100% 0, 0 0); }
+}
+
+#layout-hint { display: none; margin: 8px 0 0; color: var(--hud); font-size: 11px; }
+body.layout #panel { cursor: move; background: var(--hud); }
 body.layout #layout-hint { display: block; }
+
+@media (prefers-reduced-motion: reduce) {
+  #panel { animation: none; }
+  .bar span { transition: none; }
+}

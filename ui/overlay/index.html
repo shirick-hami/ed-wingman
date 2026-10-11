@@ -8,16 +8,28 @@
 </head>
 <body>
   <main id="panel">
-    <p id="notice" hidden></p>
+    <header>
+      <span class="mark">Wingman</span>
+      <span id="cmdr">-</span>
+    </header>
+
+    <p id="notice" role="status" hidden></p>
+
+    <section class="location">
+      <h1 id="system">-</h1>
+      <p id="place">-</p>
+    </section>
+
     <dl>
-      <dt>CMDR</dt><dd id="cmdr">-</dd>
-      <dt>System</dt><dd id="system">-</dd>
-      <dt>Station</dt><dd id="station">-</dd>
-      <dt>Ship</dt><dd id="ship">-</dd>
-      <dt>Credits</dt><dd id="credits">-</dd>
-      <dt>Cargo</dt><dd id="cargo">-</dd>
+      <div><dt>Ship</dt><dd id="ship">-</dd></div>
+      <div><dt>Credits</dt><dd id="credits">-</dd></div>
+      <div class="wide">
+        <dt>Cargo</dt><dd id="cargo">-</dd>
+        <div class="bar" aria-hidden="true"><span id="cargo-fill"></span></div>
+      </div>
     </dl>
-    <p id="layout-hint">Layout mode: drag to move. Ctrl+Alt+L to lock.</p>
+
+    <p id="layout-hint">Drag to move. Ctrl+Alt+L to lock.</p>
   </main>
 </body>
 </html>
