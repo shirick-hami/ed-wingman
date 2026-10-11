@@ -33,9 +33,10 @@ listen("layout", (e) => document.body.classList.toggle("layout", e.payload));
 
 // data-tauri-drag-region only reacts to the element itself, not its children, so drag from anywhere here.
 document.addEventListener("mousedown", (e) => {
-  if (e.button === 0 && document.body.classList.contains("layout")) {
-    window.__TAURI__.window.getCurrentWindow().startDragging();
-  }
+  if (e.button !== 0 || !document.body.classList.contains("layout")) return;
+  const win = window.__TAURI__.window.getCurrentWindow();
+  if (e.target.id === "grip") win.startResizeDragging("SouthEast");
+  else win.startDragging();
 });
 
 invoke("get_state").then(render);

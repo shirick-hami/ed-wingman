@@ -9,6 +9,10 @@ use tauri::menu::{Menu, MenuItem};
 use tauri::tray::TrayIconBuilder;
 use tauri::{AppHandle, Emitter, Manager};
 use tauri_plugin_global_shortcut::{Code, Modifiers, ShortcutState};
+use tauri_plugin_window_state::{AppHandleExt, StateFlags};
+
+/// Only where the overlay sits and how big it is; visibility is decided by the game being in front.
+const SAVED: StateFlags = StateFlags::POSITION.union(StateFlags::SIZE);
 
 type Shared = Arc<Mutex<state::State>>;
 
@@ -62,7 +66,12 @@ fn toggle_layout(app: &AppHandle) {
     let on = !LAYOUT.fetch_xor(true, Ordering::SeqCst);
     if let Some(w) = app.get_webview_window("main") {
         let _ = w.set_ignore_cursor_events(!on);
+        let _ = w.set_resizable(on);
         let _ = w.emit("layout", on);
+    }
+    if !on {
+        // Save on lock as well as on exit, so a crash or forced close keeps the layout.
+        let _ = app.save_window_state(SAVED);
     }
 }
 
@@ -106,6 +115,7 @@ fn start_reader(app: AppHandle, shared: Shared) {
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
+        .plugin(tauri_plugin_window_state::Builder::default().with_state_flags(SAVED).build())
         .invoke_handler(tauri::generate_handler![get_state])
         .setup(|app| {
             let shared: Shared = Arc::default();

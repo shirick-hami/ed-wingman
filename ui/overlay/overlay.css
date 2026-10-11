@@ -1,17 +1,21 @@
 /* Cockpit-hologram look: orange light on tinted glass, cut corners, bracket ticks.
-   --hud is the one colour to change to match an EDHM theme. */
+   --hud is the one colour to change to match an EDHM theme.
+   Sizes are in rem and the root size follows the window width, so resizing the overlay scales it. */
 :root {
   --hud: #ff7a00;
-  --hud-dim: color-mix(in srgb, var(--hud) 62%, #000);
+  /* 80% keeps small labels above 4.5:1 on the glass; 62% measured about 3.3:1. */
+  --hud-dim: color-mix(in srgb, var(--hud) 80%, #000);
   --hud-faint: color-mix(in srgb, var(--hud) 22%, transparent);
-  --glass: rgba(12, 7, 2, 0.8);
+  --glass: rgba(12, 7, 2, 0.82);
   --value: #ffe2c2;
   --warn: #ff3b2f;
-  --cut: 14px;
+  --cut: 1.1rem;
   --font: "Bahnschrift", "DIN Alternate", "Segoe UI", system-ui, sans-serif;
+  font-size: clamp(10px, 3.6vw, 24px);
 }
 
 html, body {
+  height: 100%;
   margin: 0;
   background: transparent;
   overflow: hidden;
@@ -25,11 +29,14 @@ html, body {
 #panel {
   --shape: polygon(var(--cut) 0, 100% 0, 100% calc(100% - var(--cut)), calc(100% - var(--cut)) 100%, 0 100%, 0 var(--cut));
   position: relative;
+  box-sizing: border-box;
+  height: calc(100% - 12px);
   margin: 6px;
-  padding: 10px 14px 12px;
+  padding: 0.8rem 1.1rem 0.9rem;
   clip-path: var(--shape);
   background: var(--hud-dim);
   isolation: isolate;
+  overflow: hidden;
 }
 #panel::before {
   content: "";
@@ -60,32 +67,32 @@ header {
   display: flex;
   justify-content: space-between;
   align-items: baseline;
-  gap: 12px;
-  padding-bottom: 6px;
+  gap: 1rem;
+  padding-bottom: 0.45rem;
   border-bottom: 1px solid var(--hud-faint);
   font-stretch: semi-condensed;
-  font-size: 11px;
+  font-size: 0.85rem;
   letter-spacing: 0.14em;
   text-transform: uppercase;
 }
 .mark { color: var(--hud); font-weight: 700; }
-#cmdr { color: var(--hud-dim); }
+#cmdr { color: var(--hud-dim); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 #cmdr:not(:empty)::before { content: "CMDR "; }
 
 #notice {
-  margin: 8px 0 0;
-  padding: 4px 8px;
+  margin: 0.6rem 0 0;
+  padding: 0.3rem 0.6rem;
   border-left: 2px solid var(--warn);
   background: rgba(255, 59, 47, 0.12);
   color: #ffb3ad;
-  font-size: 12px;
+  font-size: 0.92rem;
 }
 
-.location { margin: 10px 0 8px; }
+.location { margin: 0.75rem 0 0.6rem; }
 h1 {
   margin: 0;
   color: var(--hud);
-  font-size: 21px;
+  font-size: 1.6rem;
   font-weight: 600;
   letter-spacing: 0.02em;
   line-height: 1.1;
@@ -95,27 +102,27 @@ h1 {
   overflow: hidden;
   text-overflow: ellipsis;
 }
-#place { margin: 2px 0 0; font-size: 13px; color: var(--value); }
+#place { margin: 0.15rem 0 0; font-size: 1rem; }
 
 dl {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 8px 16px;
+  gap: 0.6rem 1.2rem;
   margin: 0;
-  padding-top: 8px;
+  padding-top: 0.6rem;
   border-top: 1px solid var(--hud-faint);
 }
 dl .wide { grid-column: 1 / -1; }
 dt {
   color: var(--hud-dim);
   font-stretch: semi-condensed;
-  font-size: 10px;
+  font-size: 0.77rem;
   letter-spacing: 0.16em;
   text-transform: uppercase;
 }
 dd {
-  margin: 1px 0 0;
-  font-size: 14px;
+  margin: 0.08rem 0 0;
+  font-size: 1.08rem;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -123,8 +130,8 @@ dd {
 
 /* Hold fill: segmented like the in-game cargo meter. */
 .bar {
-  height: 5px;
-  margin-top: 4px;
+  height: 0.4rem;
+  margin-top: 0.3rem;
   background: repeating-linear-gradient(90deg, var(--hud-faint) 0 6px, transparent 6px 8px);
 }
 .bar span {
@@ -135,15 +142,27 @@ dd {
   transition: width 0.4s ease-out;
 }
 
-/* One moment of motion: a scan line passes once when the panel boots. */
+/* One moment of motion: the panel draws in once when it boots. */
 #panel { animation: boot 0.5s ease-out both; }
 @keyframes boot {
   from { opacity: 0; clip-path: polygon(0 0, 100% 0, 100% 0, 0 0); }
 }
 
-#layout-hint { display: none; margin: 8px 0 0; color: var(--hud); font-size: 11px; }
+/* Layout mode: frame lights up, resize grip appears in the cut corner (24px minimum target). */
+#layout-hint { display: none; margin: 0.6rem 0 0; color: var(--hud); font-size: 0.85rem; }
+#grip {
+  display: none;
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  width: max(24px, 1.8rem);
+  height: max(24px, 1.8rem);
+  cursor: nwse-resize;
+  background: linear-gradient(135deg, transparent 50%, var(--hud) 50% 58%, transparent 58% 70%, var(--hud) 70% 78%, transparent 78%);
+}
 body.layout #panel { cursor: move; background: var(--hud); }
-body.layout #layout-hint { display: block; }
+body.layout #layout-hint,
+body.layout #grip { display: block; }
 
 @media (prefers-reduced-motion: reduce) {
   #panel { animation: none; }
