@@ -21,7 +21,8 @@ static LAYOUT: AtomicBool = AtomicBool::new(false);
 /// The user's show/hide choice. The overlay is actually shown only while the game is in front.
 static USER_VISIBLE: AtomicBool = AtomicBool::new(true);
 
-const POLL: Duration = Duration::from_millis(250);
+/// One tick checks the foreground window and a handful of file timestamps: cheap enough at 10 Hz.
+const POLL: Duration = Duration::from_millis(100);
 
 #[tauri::command]
 fn get_state(shared: tauri::State<Shared>) -> state::State {
@@ -40,7 +41,8 @@ fn journal_dir() -> Option<PathBuf> {
 
 /// `--always-show` skips the foreground check, for development without the game.
 fn always_show() -> bool {
-    std::env::args().any(|a| a == "--always-show")
+    static ALWAYS: std::sync::LazyLock<bool> = std::sync::LazyLock::new(|| std::env::args().any(|a| a == "--always-show"));
+    *ALWAYS
 }
 
 /// The game's window title is "Elite - Dangerous (CLIENT)".
@@ -58,8 +60,22 @@ fn game_in_foreground() -> bool {
     true
 }
 
-fn toggle_visible(_app: &AppHandle) {
+/// Hidden when alt-tabbed away, so it never floats over the desktop.
+fn should_show() -> bool {
+    USER_VISIBLE.load(Ordering::SeqCst)
+        && (always_show() || LAYOUT.load(Ordering::SeqCst) || game_in_foreground())
+}
+
+fn apply_visibility(app: &AppHandle, show: bool) {
+    if let Some(w) = app.get_webview_window("main") {
+        let _ = if show { w.show() } else { w.hide() };
+    }
+}
+
+fn toggle_visible(app: &AppHandle) {
     USER_VISIBLE.fetch_xor(true, Ordering::SeqCst);
+    // Act now rather than on the next tick, so the hotkey feels instant.
+    apply_visibility(app, should_show());
 }
 
 fn toggle_layout(app: &AppHandle) {
@@ -82,18 +98,13 @@ fn start_reader(app: AppHandle, shared: Shared) {
         s.journal_dir = dir.as_ref().map(|d| d.display().to_string()).unwrap_or_default();
         s.journal_found = dir.as_ref().is_some_and(|d| d.is_dir());
     }
-    let always = always_show();
     std::thread::spawn(move || {
         let mut reader = dir.map(journal::Reader::new);
         let mut shown = None;
         loop {
-            // Hidden when alt-tabbed away, so it never floats over the desktop.
-            let show = USER_VISIBLE.load(Ordering::SeqCst)
-                && (always || LAYOUT.load(Ordering::SeqCst) || game_in_foreground());
+            let show = should_show();
             if shown != Some(show) {
-                if let Some(w) = app.get_webview_window("main") {
-                    let _ = if show { w.show() } else { w.hide() };
-                }
+                apply_visibility(&app, show);
                 shown = Some(show);
             }
 

@@ -32,11 +32,21 @@ listen("state", (e) => render(e.payload));
 listen("layout", (e) => document.body.classList.toggle("layout", e.payload));
 
 // data-tauri-drag-region only reacts to the element itself, not its children, so drag from anywhere here.
+const { getCurrentWindow, LogicalSize } = window.__TAURI__.window;
+const win = getCurrentWindow();
+
 document.addEventListener("mousedown", (e) => {
   if (e.button !== 0 || !document.body.classList.contains("layout")) return;
-  const win = window.__TAURI__.window.getCurrentWindow();
-  if (e.target.id === "grip") win.startResizeDragging("SouthEast");
+  // Only the width is dragged: text scales with width and the height follows the content below.
+  if (e.target.id === "grip") win.startResizeDragging("East");
   else win.startDragging();
 });
+
+// Fit the window height to the panel so there is never empty space under the content.
+const MARGIN = 12; // #panel's 6px margin, top and bottom
+new ResizeObserver(() => {
+  const h = Math.ceil($("panel").getBoundingClientRect().height) + MARGIN;
+  if (Math.abs(window.innerHeight - h) > 1) win.setSize(new LogicalSize(window.innerWidth, h));
+}).observe($("panel"));
 
 invoke("get_state").then(render);

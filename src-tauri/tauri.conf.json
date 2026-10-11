@@ -24,7 +24,6 @@
         "skipTaskbar": true,
         "resizable": false,
         "minWidth": 260,
-        "minHeight": 180,
         "focus": false,
         "visible": false
       }
