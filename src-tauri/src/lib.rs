@@ -68,36 +68,76 @@ fn should_show() -> bool {
         && (always_show() || LAYOUT.load(Ordering::SeqCst) || game_in_foreground())
 }
 
-/// Shows without activating. Tauri's `show()` takes keyboard focus, which pulled it away from the
-/// game and made the foreground check hide the overlay again, in a loop.
+/// Makes the window's real visibility match `should_show()`.
+///
+/// Shown with SW_SHOWNOACTIVATE: Tauri's `show()` takes keyboard focus, which pulled it away from
+/// the game and made the foreground check hide the overlay again, in a loop.
+///
+/// Compared against the real window state, not a remembered one: Tauri still believes the window
+/// is hidden (it never showed it), so any style change it makes, such as toggling click-through,
+/// rewrites the style without WS_VISIBLE and hides the window behind our back.
 #[cfg(windows)]
-fn apply_visibility(app: &AppHandle, show: bool) {
-    use windows_sys::Win32::UI::WindowsAndMessaging::{SW_HIDE, SW_SHOWNOACTIVATE, ShowWindow};
+fn sync_visibility(app: &AppHandle) {
+    use windows_sys::Win32::UI::WindowsAndMessaging::{IsWindowVisible, SW_HIDE, SW_SHOWNOACTIVATE, ShowWindow};
+    let show = should_show();
     if let Some(Ok(hwnd)) = app.get_webview_window("main").map(|w| w.hwnd()) {
         // SAFETY: the handle belongs to our own live window.
-        unsafe { ShowWindow(hwnd.0 as _, if show { SW_SHOWNOACTIVATE } else { SW_HIDE }) };
+        unsafe {
+            if (IsWindowVisible(hwnd.0 as _) != 0) != show {
+                ShowWindow(hwnd.0 as _, if show { SW_SHOWNOACTIVATE } else { SW_HIDE });
+            }
+        }
     }
 }
 
 #[cfg(not(windows))]
-fn apply_visibility(app: &AppHandle, show: bool) {
+fn sync_visibility(app: &AppHandle) {
     if let Some(w) = app.get_webview_window("main") {
-        let _ = if show { w.show() } else { w.hide() };
+        let _ = if should_show() { w.show() } else { w.hide() };
     }
 }
 
 fn toggle_visible(app: &AppHandle) {
     USER_VISIBLE.fetch_xor(true, Ordering::SeqCst);
     // Act now rather than on the next tick, so the hotkey feels instant.
-    apply_visibility(app, should_show());
+    sync_visibility(app);
 }
 
+/// Hands keyboard and mouse back to the game after layout mode.
+#[cfg(windows)]
+fn focus_game() {
+    use windows_sys::Win32::UI::WindowsAndMessaging::{FindWindowW, SetForegroundWindow};
+    let title: Vec<u16> = "Elite - Dangerous (CLIENT)\0".encode_utf16().collect();
+    // SAFETY: null class and a NUL-terminated title; a null result is checked before use.
+    unsafe {
+        let game = FindWindowW(std::ptr::null(), title.as_ptr());
+        if !game.is_null() {
+            SetForegroundWindow(game);
+        }
+    }
+}
+
+#[cfg(not(windows))]
+fn focus_game() {}
+
+/// Layout mode takes focus on purpose. While the game is the active window it owns the mouse:
+/// it hides the cursor and treats every click as a control, so dragging the overlay fired weapons.
+/// Making the overlay the active window frees the cursor and stops the game reading the mouse.
 fn toggle_layout(app: &AppHandle) {
     let on = !LAYOUT.fetch_xor(true, Ordering::SeqCst);
     if let Some(w) = app.get_webview_window("main") {
         let _ = w.set_ignore_cursor_events(!on);
+        let _ = w.set_focusable(on);
+        if on {
+            let _ = w.show();
+            let _ = w.set_focus();
+        }
         let _ = w.emit("layout", on);
     }
+    if !on {
+        focus_game();
+    }
+    sync_visibility(app);
     if !on {
         // Save on lock as well as on exit, so a crash or forced close keeps the layout.
         let _ = app.save_window_state(SAVED);
@@ -113,13 +153,8 @@ fn start_reader(app: AppHandle, shared: Shared) {
     }
     std::thread::spawn(move || {
         let mut reader = dir.map(journal::Reader::new);
-        let mut shown = None;
         loop {
-            let show = should_show();
-            if shown != Some(show) {
-                apply_visibility(&app, show);
-                shown = Some(show);
-            }
+            sync_visibility(&app);
 
             let events = reader.as_mut().map(journal::Reader::poll).unwrap_or_default();
             if !events.is_empty() {
