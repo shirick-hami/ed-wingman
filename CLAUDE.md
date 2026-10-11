@@ -14,7 +14,7 @@ In-game companion overlay for Elite Dangerous, Windows PC only. The full plan, w
 
 - Tests: `cargo test --manifest-path src-tauri/Cargo.toml`
 - Lint (CI fails on warnings): `cargo clippy --manifest-path src-tauri/Cargo.toml --all-targets -- -D warnings`
-- Run against the fixture: `npx tauri dev -- -- --journal src-tauri/tests/fixtures/journal --always-show`
+- Run against the fixture: `npx tauri dev -- -- --journal tests/fixtures/journal --always-show` (the app runs from `src-tauri/`, so a relative `--journal` path is relative to that)
 - Hotkeys: Ctrl+Alt+O show/hide, Ctrl+Alt+L layout mode (drag to move).
 
 ## Rules
