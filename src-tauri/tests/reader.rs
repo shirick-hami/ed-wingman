@@ -112,6 +112,16 @@ fn loading_in_on_foot_keeps_the_last_ship() {
 }
 
 #[test]
+fn status_updates_the_hold_total_before_cargo_json_arrives() {
+    let mut s = State::default();
+    s.apply(&json!({"event":"Status","Flags":16777216,"Cargo":1.0,"Balance":49916}));
+    assert_eq!((s.cargo.count, s.balance), (1, Some(49916)));
+    // In the SRV the figure is the SRV's own hold, not the ship's.
+    s.apply(&json!({"event":"Status","Flags":67108864,"Cargo":0.0,"Balance":49916}));
+    assert_eq!(s.cargo.count, 1);
+}
+
+#[test]
 fn game_closed_status_marks_not_running() {
     let mut s = State::default();
     s.apply(&json!({"event":"LoadGame","FID":"F1","Commander":"One","Credits":5}));

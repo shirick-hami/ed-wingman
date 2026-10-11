@@ -272,6 +272,14 @@ impl State {
                 if let Some(bal) = i(ev, "Balance") {
                     self.balance = Some(bal);
                 }
+                // The game rewrites Status.json at once but Cargo.json and the journal about two
+                // seconds later, so take the hold's total from here. Items still come from Cargo.json.
+                const IN_MAIN_SHIP: u32 = 1 << 24;
+                if flags & IN_MAIN_SHIP != 0
+                    && let Some(tonnes) = f(ev, "Cargo")
+                {
+                    self.cargo.count = tonnes.round() as u64;
+                }
                 // With the game closed the file holds only timestamp, event and Flags: 0.
                 let fields = ev.as_object().map_or(0, |o| o.len());
                 self.running = !(flags == 0 && fields <= 3);
