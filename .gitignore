@@ -1,0 +1,11 @@
+node_modules/
+src-tauri/target/
+src-tauri/gen/schemas/
+
+# Real commander journals used for local testing: personal data, never committed.
+test-journals/
+
+.vscode/*
+.idea/
+*.log
+!src-tauri/tests/fixtures/**/*.log

@@ -1,0 +1,39 @@
+:root {
+  --bg: rgba(8, 10, 14, 0.78);
+  --text: #ece8e1;
+  --muted: #9a958c;
+  --accent: #ff8c1a;
+  --warn: #ff5a4f;
+}
+
+html, body {
+  margin: 0;
+  background: transparent;
+  color: var(--text);
+  font: 13px/1.4 "Segoe UI", system-ui, sans-serif;
+  user-select: none;
+  overflow: hidden;
+}
+
+#panel {
+  margin: 4px;
+  padding: 8px 12px;
+  background: var(--bg);
+  border-left: 3px solid var(--accent);
+  border-radius: 4px;
+}
+
+dl {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: 2px 12px;
+  margin: 0;
+}
+dt { color: var(--muted); text-transform: uppercase; font-size: 11px; letter-spacing: 0.04em; align-self: center; }
+dd { margin: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+#notice { margin: 0 0 6px; color: var(--warn); }
+
+#layout-hint { display: none; margin: 6px 0 0; color: var(--accent); font-size: 11px; }
+body.layout #panel { outline: 1px dashed var(--accent); cursor: move; }
+body.layout #layout-hint { display: block; }

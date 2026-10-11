@@ -1,0 +1,5 @@
+{ "timestamp":"2026-10-11T10:25:00Z", "event":"Cargo", "Vessel":"Ship", "Count":18, "Inventory":[
+  { "Name":"gold", "Count":2, "Stolen":0 },
+  { "Name":"gold", "MissionID":65397935, "Count":14, "Stolen":0 },
+  { "Name":"iondistributor", "Name_Localised":"Ion Distributor", "Count":2, "Stolen":0 }
+] }

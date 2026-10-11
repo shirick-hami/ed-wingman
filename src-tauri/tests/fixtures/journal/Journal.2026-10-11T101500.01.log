@@ -1,0 +1,15 @@
+{ "timestamp":"2026-10-11T10:15:00Z", "event":"fileheader", "part":1, "language":"English/UK", "Odyssey":true, "gameversion":"4.0.0.1904", "build":"r298015/r0 " }
+{ "timestamp":"2026-10-11T10:15:05Z", "event":"Commander", "FID":"F1000001", "Name":"Test Pilot" }
+{ "timestamp":"2026-10-11T10:15:05Z", "event":"Materials", "Raw":[ { "Name":"iron", "Count":12 } ], "Manufactured":[], "Encoded":[] }
+{ "timestamp":"2026-10-11T10:15:06Z", "event":"LoadGame", "FID":"F1000001", "Commander":"Test Pilot", "Horizons":true, "Odyssey":true, "Ship":"Type9", "Ship_Localised":"Type-9 Heavy", "ShipID":7, "ShipName":"Slow Boat", "ShipIdent":"TP-09", "FuelLevel":32.0, "FuelCapacity":32.0, "GameMode":"Solo", "Credits":152000000, "Loan":0 }
+{ "timestamp":"2026-10-11T10:15:07Z", "event":"Loadout", "Ship":"type9", "ShipID":7, "ShipName":"Slow Boat", "ShipIdent":"TP-09", "HullValue":73255168, "ModulesValue":40000000, "HullHealth":1.0, "UnladenMass":879.4, "CargoCapacity":720, "MaxJumpRange":18.42, "FuelCapacity":{ "Main":32.0, "Reserve":0.83 }, "Rebuy":5662758, "Modules":[] }
+{ "timestamp":"2026-10-11T10:15:08Z", "event":"Location", "Docked":true, "StationName":"Jameson Memorial", "StationType":"Orbis", "MarketID":128666762, "StarSystem":"Shinrarta Dezhra", "SystemAddress":3932277478106, "StarPos":[55.71875,17.59375,27.15625], "Body":"Jameson Memorial", "BodyType":"Station", "SomeFutureField":42 }
+{ "timestamp":"2026-10-11T10:15:09Z", "event":"Cargo", "Vessel":"Ship", "Count":0, "Inventory":[] }
+{ "timestamp":"2026-10-11T10:16:00Z", "event":"SomeEventFromAFuturePatch", "Whatever":true }
+{ "timestamp":"2026-10-11T10:20:00Z", "event":"Undocked", "StationName":"Jameson Memorial", "MarketID":128666762 }
+{ "timestamp":"2026-10-11T10:21:00Z", "event":"StartJump", "JumpType":"Hyperspace", "StarSystem":"Eranin", "SystemAddress":2832631632594, "StarClass":"M" }
+{ "timestamp":"2026-10-11T10:21:30Z", "event":"FSDJump", "StarSystem":"Eranin", "SystemAddress":2832631632594, "StarPos":[-22.84375,36.53125,-1.1875], "Body":"Eranin", "JumpDist":13.334, "FuelUsed":2.1, "FuelLevel":29.9 }
+{ "timestamp":"2026-10-11T10:23:00Z", "event":"SupercruiseExit", "StarSystem":"Eranin", "SystemAddress":2832631632594, "Body":"Azeban City", "BodyType":"Station" }
+{ "timestamp":"2026-10-11T10:24:00Z", "event":"Docked", "StationName":"Azeban City", "StationType":"Coriolis", "StarSystem":"Eranin", "SystemAddress":2832631632594, "MarketID":128001536, "DistFromStarLS":1004.5 }
+{ "timestamp":"2026-10-11T10:25:00Z", "event":"Cargo", "Vessel":"Ship" }
+{ "timestamp":"2026-10-11T10:26:00Z", "event":"HullDamage", "Health":0.82, "PlayerPilot":true, "Fighter":false }
