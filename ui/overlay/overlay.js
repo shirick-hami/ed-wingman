@@ -36,17 +36,47 @@ const { getCurrentWindow, LogicalSize } = window.__TAURI__.window;
 const win = getCurrentWindow();
 
 document.addEventListener("mousedown", (e) => {
-  if (e.button !== 0 || !document.body.classList.contains("layout")) return;
-  // Only the width is dragged: text scales with width and the height follows the content below.
-  if (e.target.id === "grip") win.startResizeDragging("East");
-  else win.startDragging();
+  if (e.button === 0 && e.target.id !== "grip" && document.body.classList.contains("layout")) win.startDragging();
 });
 
-// Fit the window height to the panel so there is never empty space under the content.
 const MARGIN = 12; // #panel's 6px margin, top and bottom
+const MIN_WIDTH = 260;
+const panelHeight = () => Math.ceil($("panel").getBoundingClientRect().height) + MARGIN;
+
+// Fit the window height to the panel so there is never empty space under the content.
+let resizing = null;
 new ResizeObserver(() => {
-  const h = Math.ceil($("panel").getBoundingClientRect().height) + MARGIN;
-  if (Math.abs(window.innerHeight - h) > 1) win.setSize(new LogicalSize(window.innerWidth, h));
+  if (!resizing && Math.abs(window.innerHeight - panelHeight()) > 1) {
+    win.setSize(new LogicalSize(window.innerWidth, panelHeight()));
+  }
 }).observe($("panel"));
+
+// Resizing is done here rather than by Windows: the content is laid out at the target width first,
+// then width and height are set together in one call per frame. Letting Windows resize while this
+// page corrected the height made the two fight, which is what caused the blinking and clipping.
+function layoutAt(width) {
+  document.documentElement.style.fontSize = `${Math.min(24, Math.max(10, width * 0.036))}px`;
+  document.body.style.width = `${width}px`;
+  win.setSize(new LogicalSize(width, panelHeight()));
+}
+
+const grip = $("grip");
+grip.addEventListener("pointerdown", (e) => {
+  e.preventDefault();
+  grip.setPointerCapture(e.pointerId);
+  resizing = { x0: e.screenX, w0: window.innerWidth, frame: 0 };
+});
+grip.addEventListener("pointermove", (e) => {
+  if (!resizing) return;
+  const width = Math.max(MIN_WIDTH, Math.round(resizing.w0 + e.screenX - resizing.x0));
+  cancelAnimationFrame(resizing.frame);
+  resizing.frame = requestAnimationFrame(() => layoutAt(width));
+});
+grip.addEventListener("pointerup", () => {
+  resizing = null;
+  // The window now matches the chosen width, so the width-based sizes in the stylesheet take over again.
+  document.documentElement.style.fontSize = "";
+  document.body.style.width = "";
+});
 
 invoke("get_state").then(render);

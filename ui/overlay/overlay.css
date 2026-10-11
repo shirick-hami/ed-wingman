@@ -157,6 +157,7 @@ dd {
   width: max(24px, 1.8rem);
   height: max(24px, 1.8rem);
   cursor: nwse-resize;
+  touch-action: none;
   background: linear-gradient(135deg, transparent 50%, var(--hud) 50% 58%, transparent 58% 70%, var(--hud) 70% 78%, transparent 78%);
 }
 body.layout #panel { cursor: move; background: var(--hud); }

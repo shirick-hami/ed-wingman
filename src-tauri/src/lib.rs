@@ -82,7 +82,6 @@ fn toggle_layout(app: &AppHandle) {
     let on = !LAYOUT.fetch_xor(true, Ordering::SeqCst);
     if let Some(w) = app.get_webview_window("main") {
         let _ = w.set_ignore_cursor_events(!on);
-        let _ = w.set_resizable(on);
         let _ = w.emit("layout", on);
     }
     if !on {
