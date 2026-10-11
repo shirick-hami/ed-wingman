@@ -1,15 +1,17 @@
-/* Cockpit-hologram look: orange light on tinted glass, cut corners, bracket ticks.
-   --hud is the one colour to change to match an EDHM theme.
+/* Cockpit-hologram look: light drawn on almost-clear glass, cut corners, bracket ticks.
+   --hud is the one colour to change to match an EDHM theme; --glass-alpha is how see-through it is.
    Sizes are in rem and the root size follows the window width, so resizing the overlay scales it. */
 :root {
   --hud: #ff7a00;
-  /* 80% keeps small labels above 4.5:1 on the glass; 62% measured about 3.3:1. */
-  --hud-dim: color-mix(in srgb, var(--hud) 80%, #000);
-  --hud-faint: color-mix(in srgb, var(--hud) 22%, transparent);
-  --glass: rgba(12, 7, 2, 0.82);
-  --value: #ffe2c2;
+  --hud-dim: color-mix(in srgb, var(--hud) 88%, #000);
+  --hud-faint: color-mix(in srgb, var(--hud) 30%, transparent);
+  /* 0 = clear, 1 = solid. The game shows through; text stays readable from its dark halo, not the glass. */
+  --glass-alpha: 0.3;
+  --value: #ffe9d2;
   --warn: #ff3b2f;
   --cut: 1.1rem;
+  --line: 1px;
+  --halo: 0 0 2px #000, 0 0 4px #000, 0 1px 6px rgba(0, 0, 0, 0.9);
   --font: "Bahnschrift", "DIN Alternate", "Segoe UI", system-ui, sans-serif;
   font-size: clamp(10px, 3.6vw, 24px);
 }
@@ -23,52 +25,61 @@ html, body {
   font-family: var(--font);
   font-variant-numeric: tabular-nums;
   color: var(--value);
+  text-shadow: var(--halo);
 }
 
-/* Frame: the outer layer is the 1px orange line, the inner layer the glass, both cut at two corners. */
+/* Bracket ticks on the two square corners sit on the panel itself. */
 #panel {
   --shape: polygon(var(--cut) 0, 100% 0, 100% calc(100% - var(--cut)), calc(100% - var(--cut)) 100%, 0 100%, 0 var(--cut));
   position: relative;
   box-sizing: border-box;
   margin: 6px;
   padding: 0.8rem 1.1rem 0.9rem;
-  clip-path: var(--shape);
-  background: var(--hud-dim);
   isolation: isolate;
   overflow: hidden;
+  background:
+    linear-gradient(var(--hud), var(--hud)) top 4px right 4px / 12px 2px,
+    linear-gradient(var(--hud), var(--hud)) top 4px right 4px / 2px 12px,
+    linear-gradient(var(--hud), var(--hud)) bottom 4px left 4px / 12px 2px,
+    linear-gradient(var(--hud), var(--hud)) bottom 4px left 4px / 2px 12px;
+  background-repeat: no-repeat;
 }
+/* Glass: darkest behind the text on the left, fading to nearly clear on the right. */
 #panel::before {
   content: "";
   position: absolute;
-  inset: 1px;
+  inset: 0;
   z-index: -1;
   clip-path: var(--shape);
   background:
-    repeating-linear-gradient(0deg, transparent 0 2px, rgba(255, 122, 0, 0.035) 2px 3px),
-    linear-gradient(160deg, rgba(255, 122, 0, 0.09), transparent 45%),
-    var(--glass);
+    repeating-linear-gradient(0deg, transparent 0 3px, rgba(255, 122, 0, 0.05) 3px 4px),
+    linear-gradient(100deg, rgba(6, 4, 2, var(--glass-alpha)), rgba(6, 4, 2, calc(var(--glass-alpha) * 0.35)));
 }
-/* Bracket ticks on the two uncut corners. */
+/* Frame: a hairline ring following the cut corners, bright at the corners and fading along the edges.
+   The polygon traces the outer edge, then the inner edge, and evenodd leaves only the ring between. */
 #panel::after {
+  --in: calc(var(--cut) + var(--line) * 0.414);
   content: "";
   position: absolute;
-  inset: 3px;
+  inset: 0;
   pointer-events: none;
-  background:
-    linear-gradient(var(--hud), var(--hud)) top right / 10px 2px,
-    linear-gradient(var(--hud), var(--hud)) top right / 2px 10px,
-    linear-gradient(var(--hud), var(--hud)) bottom left / 10px 2px,
-    linear-gradient(var(--hud), var(--hud)) bottom left / 2px 10px;
-  background-repeat: no-repeat;
+  clip-path: polygon(evenodd,
+    var(--cut) 0, 100% 0, 100% calc(100% - var(--cut)), calc(100% - var(--cut)) 100%, 0 100%, 0 var(--cut), var(--cut) 0,
+    var(--in) var(--line), calc(100% - var(--line)) var(--line), calc(100% - var(--line)) calc(100% - var(--in)),
+    calc(100% - var(--in)) calc(100% - var(--line)), var(--line) calc(100% - var(--line)), var(--line) var(--in), var(--in) var(--line));
+  background: linear-gradient(135deg, var(--hud), var(--hud-faint) 35%, var(--hud-faint) 65%, var(--hud));
 }
 
+/* The header rule is a tick ruler, like the scale marks on the ship's HUD. */
 header {
   display: flex;
   justify-content: space-between;
   align-items: baseline;
   gap: 1rem;
-  padding-bottom: 0.45rem;
-  border-bottom: 1px solid var(--hud-faint);
+  padding-bottom: 0.6rem;
+  background:
+    linear-gradient(var(--hud-faint), var(--hud-faint)) bottom / 100% 1px no-repeat,
+    repeating-linear-gradient(90deg, var(--hud-dim) 0 1px, transparent 1px 8px) bottom / 100% 4px no-repeat;
   font-stretch: semi-condensed;
   font-size: 0.85rem;
   letter-spacing: 0.14em;
@@ -96,7 +107,7 @@ h1 {
   letter-spacing: 0.02em;
   line-height: 1.1;
   text-transform: uppercase;
-  text-shadow: 0 0 8px rgba(255, 122, 0, 0.45);
+  text-shadow: var(--halo), 0 0 10px rgba(255, 122, 0, 0.6);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -144,7 +155,8 @@ dd {
 /* One moment of motion: the panel draws in once when it boots. */
 #panel { animation: boot 0.5s ease-out both; }
 @keyframes boot {
-  from { opacity: 0; clip-path: polygon(0 0, 100% 0, 100% 0, 0 0); }
+  from { opacity: 0; clip-path: inset(0 0 100% 0); }
+  to { clip-path: inset(0); }
 }
 
 /* Layout mode: frame lights up, resize grip appears in the cut corner (24px minimum target). */
@@ -160,7 +172,8 @@ dd {
   touch-action: none;
   background: linear-gradient(135deg, transparent 50%, var(--hud) 50% 58%, transparent 58% 70%, var(--hud) 70% 78%, transparent 78%);
 }
-body.layout #panel { cursor: move; background: var(--hud); }
+body.layout #panel { cursor: move; --line: 2px; --glass-alpha: 0.8; }
+body.layout #panel::after { background: var(--hud); }
 body.layout #layout-hint,
 body.layout #grip { display: block; }
 
